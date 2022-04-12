@@ -1,8 +1,10 @@
 package com.patrick.dynamicanimation
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.dynamicanimation.animation.DynamicAnimation
@@ -14,24 +16,34 @@ class MainActivity : AppCompatActivity() {
     var moveX = 0f
     var moveY = 0f
 
-    private val binding: ActivityMainBinding by lazy {
-        DataBindingUtil.setContentView(
-            this,
-            R.layout.activity_main
-        )
-    }
+    private val binding: ActivityMainBinding by lazy { DataBindingUtil.setContentView(this, R.layout.activity_main) }
 
-    lateinit var xAnimation: SpringAnimation
-    lateinit var yAnimation: SpringAnimation
-
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        xAnimation = SpringAnimation(binding.fab, SpringAnimation.X, binding.fab.x)
-        yAnimation = SpringAnimation(binding.fab, SpringAnimation.Y, binding.fab.y)
+        val animation = SpringAnimation(binding.fab, SpringAnimation.TRANSLATION_X)
+        val xAnimation = SpringAnimation(binding.fab2, SpringAnimation.TRANSLATION_X)
+        val yAnimation = SpringAnimation(binding.fab2, SpringAnimation.TRANSLATION_Y)
 
         binding.fab.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
+            v.performClick()
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    moveX = v.x - event.rawX
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    v.animate().x(event.rawX + moveX).setDuration(0).start()
+                }
+                MotionEvent.ACTION_UP -> {
+                    animation.animateToFinalPosition(0F)
+                }
+            }
+            true
+        }
+        binding.fab2.setOnTouchListener { v, event ->
+            v.performClick()
+            when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     moveX = v.x - event.rawX
                     moveY = v.y - event.rawY
@@ -40,28 +52,11 @@ class MainActivity : AppCompatActivity() {
                     v.animate().x(event.rawX + moveX).y(event.rawY + moveY).setDuration(0).start()
                 }
                 MotionEvent.ACTION_UP -> {
-                    xAnimation.start()
-                    yAnimation.start()
+                    xAnimation.animateToFinalPosition(0F)
+                    yAnimation.animateToFinalPosition(0F)
                 }
             }
             true
         }
-        startSpringAnimation(binding.fab)
-    }
-
-    private fun startSpringAnimation(view: View) {
-        // create an animation for your view and set the property you want to animate
-        val animation1 = SpringAnimation(view, SpringAnimation.X, 400f)
-        val animation2 = SpringAnimation(view, SpringAnimation.Y, 400f)
-
-        val spring = SpringForce().apply {
-            finalPosition = view.x
-            stiffness = SpringForce.STIFFNESS_VERY_LOW
-            dampingRatio = SpringForce.DAMPING_RATIO_HIGH_BOUNCY
-        }
-        animation1.spring = spring
-        animation1.start()
-        animation2.spring = spring
-        animation2.start()
     }
 }
